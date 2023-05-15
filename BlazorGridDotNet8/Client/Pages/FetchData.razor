@@ -1,0 +1,76 @@
+﻿@page "/fetchdata"
+@using BlazorGridDotNet8.Shared
+@using Microsoft.AspNetCore.Components.QuickGrid
+@inject HttpClient Http
+
+<PageTitle>Weather forecast</PageTitle>
+
+<h1>Weather forecast</h1>
+
+<p>This component demonstrates fetching data from the server.</p>
+
+@if (forecasts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <QuickGrid Items="forecasts.AsQueryable()" Pagination="pagination">
+        <PropertyColumn Property="f => f.Date" Format="dddd, dd MMMM yyyy" Sortable="true" />
+        <PropertyColumn Property="f => f.TemperatureC" Title="Temp (C)" Sortable="true" />
+        <PropertyColumn Property="f => f.TemperatureF" Title="Temp (F)" Sortable="true" />
+        <PropertyColumn Property="f => f.Summary">
+            <ColumnOptions>
+                <input />
+            </ColumnOptions>
+        </PropertyColumn>
+        <TemplateColumn>
+            <div>
+                <span>It's really @context.Summary!.ToLower() today!</span>
+            </div>
+        </TemplateColumn>
+        <TemplateColumn>
+            <button class="btn btn-primary" onclick="@(() => ShowItToMe(context))"><i class="oi oi-cloud" /></button>
+        </TemplateColumn>
+    </QuickGrid>
+
+    <Paginator State="@pagination" />
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Temp. (C)</th>
+                <th>Temp. (F)</th>
+                <th>Summary</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var forecast in forecasts)
+            {
+                <tr>
+                    <td>@forecast.Date.ToShortDateString()</td>
+                    <td>@forecast.TemperatureC</td>
+                    <td>@forecast.TemperatureF</td>
+                    <td>@forecast.Summary</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private WeatherForecast[]? forecasts;
+
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("WeatherForecast");
+    }
+
+    public void ShowItToMe(WeatherForecast forecast)
+    {
+        Console.WriteLine($"It will be {forecast.Summary!.ToLower()}.");
+    }
+}
