@@ -15,13 +15,18 @@
 }
 else
 {
-    <QuickGrid Items="forecasts.AsQueryable()" Pagination="pagination">
+    <QuickGrid Items="FilteredForecasts" Pagination="pagination">
         <PropertyColumn Property="f => f.Date" Format="dddd, dd MMMM yyyy" Sortable="true" />
-        <PropertyColumn Property="f => f.TemperatureC" Title="Temp (C)" Sortable="true" />
+        <PropertyColumn Property="f => f.TemperatureC" Title="Temp (C)" Sortable="true">
+            <ColumnOptions>
+                <p>Min: <input type="range" @bind="minTempC" @bind:event="oninput" min="-50" max="50" /><span>@minTempC</span></p>
+                <p>Max: <input type="range" @bind="maxTempC" @bind:event="oninput" min="-50" max="50" /><span>@maxTempC</span></p>
+            </ColumnOptions>
+        </PropertyColumn>
         <PropertyColumn Property="f => f.TemperatureF" Title="Temp (F)" Sortable="true" />
         <PropertyColumn Property="f => f.Summary">
             <ColumnOptions>
-                <input />
+                <input type="search" autofocus @bind="summaryFilter" @bind:event="oninput" placeholder="Summary..." />
             </ColumnOptions>
         </PropertyColumn>
         <TemplateColumn>
@@ -61,6 +66,22 @@ else
 
 @code {
     private WeatherForecast[]? forecasts;
+    string? summaryFilter;
+    int minTempC = -50;
+    int maxTempC = 50;
+
+    IQueryable<WeatherForecast> FilteredForecasts
+    {
+        get
+        {
+            var result = forecasts.AsQueryable().Where(f => f.TemperatureC >= minTempC && f.TemperatureC <= maxTempC);
+            if (!string.IsNullOrEmpty(summaryFilter))
+            {
+                result = result.Where(f => f.Summary.Contains(summaryFilter, StringComparison.CurrentCultureIgnoreCase));
+            }
+            return result;
+        }
+    }
 
     PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
 
